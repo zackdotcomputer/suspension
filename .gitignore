@@ -1,5 +1,9 @@
 # Build output
 lib/
+esm/
+umd/
+
+.DS_Store
 
 # Logs
 logs

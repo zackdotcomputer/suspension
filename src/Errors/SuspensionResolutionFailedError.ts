@@ -8,7 +8,9 @@ const SuspensionResolutionFailedErrorName = "SuspensionResolutionFailedError";
  */
 export default class SuspensionResolutionFailedError<RetryFunction> extends Error {
   name: typeof SuspensionResolutionFailedErrorName;
+
   underlyingError: Error;
+
   retryFunction: RetryFunction;
 
   constructor(underlyingError: Error, retryFunction: RetryFunction) {
