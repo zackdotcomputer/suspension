@@ -21,20 +21,23 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/travelerdev/suspension.git"
+    "url": "git+https://github.com/zackdotcomputer/suspension.git"
   },
   "keywords": [
     "react",
     "suspense",
+    "concurrent",
+    "experimental",
+    "frontend",
     "hook",
     "typescript"
   ],
-  "author": "Traveler Dev Ltd and Zack Sheppard",
+  "author": "Zack Sheppard (@zackdotcomputer)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/travelerdev/suspension/issues"
+    "url": "https://github.com/zackdotcomputer/suspension/issues"
   },
-  "homepage": "https://github.com/travelerdev/suspension#readme",
+  "homepage": "https://github.com/zackdotcomputer/suspension#readme",
   "peerDependencies": {
     "react": ">=16.13.0"
   },
