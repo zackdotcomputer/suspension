@@ -5,8 +5,12 @@
   "main": "lib/index.js",
   "module": "esm/index.js",
   "types": "lib/index.d.ts",
+  "exports": {
+    "require": "./lib/index.js",
+    "import": "./esm/index.js"
+  },
   "scripts": {
-    "build": "npm run build:cjs && npm run build:esm && npm run build:umd",
+    "build": "npm run build:cjs && npm run build:umd",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:umd": "webpack",

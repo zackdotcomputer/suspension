@@ -9,6 +9,9 @@ module.exports = {
     library: "Suspension",
     libraryTarget: "umd"
   },
+  optimization: {
+    usedExports: true
+  },
   module: {
     rules: [
       {

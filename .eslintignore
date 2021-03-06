@@ -10,3 +10,8 @@ coverage
 # Top level config files
 /*.json
 /*.js
+
+# build dirs
+lib/
+esm/
+umd/

@@ -1,6 +1,5 @@
 import React, { PropsWithChildren, Suspense, SuspenseProps, useEffect, useState } from "react";
-import SuspensionCache from "./SuspensionCache";
-import { makeRigCacheViewer, RigCacheViewer } from "./SuspensionCache/RigCacheViewer";
+import { makeRigCacheViewer, RigCacheViewer, SuspensionCache } from "./SuspensionCache";
 import SuspensionRigContext from "./SuspensionRigContext";
 
 /**
