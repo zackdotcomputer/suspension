@@ -6,3 +6,7 @@ lib
 
 # don't lint nyc coverage output
 coverage
+
+# Top level config files
+/*.json
+/*.js

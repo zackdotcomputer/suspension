@@ -1,7 +1,7 @@
 module.exports = {
   root: true,
   parserOptions: {
-    project: "./tsconfig.json"
+    project: "./tsconfig.test.json"
   },
   extends: [
     "airbnb-typescript/base",
@@ -14,6 +14,10 @@ module.exports = {
   plugins: ["prettier", "jest"],
   rules: {
     "import/extensions": ["off"],
-    "no-else-return": ["off"]
+    // Typescript handles this for us instead
+    "import/no-unresolved": ["off"],
+    "no-else-return": ["off"],
+    // Obviously, this has to be off cause Suspense is all about throwing literals
+    "@typescript-eslint/no-throw-literal": ["off"]
   }
 };

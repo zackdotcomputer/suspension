@@ -4,6 +4,8 @@ import { SuspensionWithoutContextError } from "../../Errors";
 import { useSuspension } from "../../hooks";
 import TestRig from "./TestRig";
 
+/* eslint-disable no-console */
+
 describe("useSuspension hook", () => {
   afterEach(cleanup);
 

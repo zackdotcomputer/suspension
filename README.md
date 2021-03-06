@@ -236,10 +236,11 @@ Currently completed landmarks on the Roadmap are:
 Contributions are quite literally the way we can be the change we want to see in our (devtool) world. Any contributions you make are **greatly appreciated**.
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+1. Run npm's lint and test (`npm run prepublishOnly`)
+1. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+1. Push to the Branch (`git push origin feature/AmazingFeature`)
+1. Open a Pull Request
 
 This project is actively used and monitored. I will get to PRs within a week.
 
