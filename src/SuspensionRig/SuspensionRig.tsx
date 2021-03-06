@@ -10,7 +10,7 @@ import SuspensionRigContext from "./SuspensionRigContext";
 export default function SuspensionRig({
   children,
   fallback
-}: PropsWithChildren<Pick<SuspenseProps, "fallback">>) {
+}: PropsWithChildren<Partial<Pick<SuspenseProps, "fallback">>>) {
   const [rigViewer, setRigViewer] = useState<RigCacheViewer | Promise<RigCacheViewer>>(null as any);
 
   // If we're instantiated but not yet mounted, make a promise for when we are ready.
