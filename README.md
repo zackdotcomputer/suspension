@@ -120,17 +120,19 @@ function UserProfile() {
   // a string cacheKey to keep track of what data it is loading.
   // It handles the rest.
   const userProfile: Profile = useSuspension(async () => {
-    const userObj = await getUserObj()
-    return userObj.profile
-  }, 'load-user-profile')
+    const userObj = await getUserObj();
+    return userObj.profile;
+  }, "load-user-profile");
 
   // No need to worry about userProfile being undefined. If the function
   // gets to this point, you're guaranteed to get the value your promise
   // returned. No more half-states in your components.
-  return (<>
-    <h1>Welcome {userProfile.name}</h1>
-    <img src={userProfile.profileImage} alt="You!" />
-  </>);
+  return (
+    <>
+      <h1>Welcome {userProfile.name}</h1>
+      <img src={userProfile.profileImage} alt="You!" />
+    </>
+  );
 }
 ```
 
@@ -262,8 +264,8 @@ Project Link: [https://github.com/zackdotcomputer/suspension](https://github.com
 
 ## Acknowledgements
 
+- [TSdx](https://tsdx.io/)
 - [Best Readme Template](https://github.com/othneildrew/Best-README-Template)
-- @zaki-yama's [TS/NPM Package Template](https://github.com/zaki-yama/typescript-npm-package-template)
 - [Img Shields](https://shields.io)
 - [Prettycons](https://thenounproject.com/andrei.manolache7/)
 

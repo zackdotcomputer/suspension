@@ -1,4 +1,4 @@
-import message from "../index";
+import message from "../src";
 
 describe("the library", () => {
   it("Can't be required", () => {

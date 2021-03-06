@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, Suspense } from "react";
-import { SuspensionRig } from "../../SuspensionRig";
+import { SuspensionRig } from "../../src/SuspensionRig";
 
 export default function TestRig({ children }: PropsWithChildren<{}>) {
   return (

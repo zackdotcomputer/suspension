@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import React from "react";
-import { SuspensionWithoutContextError } from "../../Errors";
-import { useLazySuspension } from "../../hooks";
+import { SuspensionWithoutContextError } from "../../src/Errors";
+import { useLazySuspension } from "../../src/hooks";
 import TestRig from "./TestRig";
 
 /* eslint-disable no-console */
