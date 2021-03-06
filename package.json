@@ -32,7 +32,7 @@
     "hook",
     "typescript"
   ],
-  "author": "Zack Sheppard (@zackdotcomputer)",
+  "author": "Zack Sheppard <hi@zack.computer> (https://www.zack.computer)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/zackdotcomputer/suspension/issues"
