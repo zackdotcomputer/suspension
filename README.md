@@ -22,7 +22,7 @@ That template is Copyright (c) 2018 Othneil Drew licensed under the MIT license.
   <h3 align="center">Suspension</h3>
 
   <p align="center">
-    A "hook in place" approach to easily integrating your existing Promise-based async data fetchers with React `<Suspense>` components.
+    A "hook in place" approach to easily integrating your existing Promise-based async data fetchers with React <pre><Suspense></pre> components.
     <br />
     <a href="https://github.com/zackdotcomputer/suspension"><strong>Explore the docs »</strong></a>
     <br />
@@ -42,7 +42,7 @@ That template is Copyright (c) 2018 Othneil Drew licensed under the MIT license.
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
-        <li><a href="#built-with">Built With</a></li>
+        <li><a href="#built-for">Built For React</a></li>
       </ul>
     </li>
     <li>
@@ -138,9 +138,9 @@ function UserProfile() {
 
 ## Usage and bits
 
-There are three main pieces to `suspension` that you use regularly:
+There are three main pieces to `suspension`:
 
-### SuspensionRig - Cache and fallback
+### `<SuspensionRig>` - Cache and fallback
 
 `<SuspensionRig>` is a safety net for your suspension calls to fall back on. Because
 suspense uses `throw` to interrupt the render process, anything that was stored in state
@@ -160,7 +160,7 @@ serves two main purposes in that way:
    If you want the `SuspenseRig` to behave as both a cache and a fallback `Suspense`, you just
    need to give it the same `fallback` prop you would give a `Suspense`.
 
-### useSuspension - The ready-to-go hook
+### `useSuspension` - The ready-to-go hook
 
 `useSuspension(generator, cacheKey, options)` is the primary hook for accessing suspension. It takes
 a parameter-free generator function that returns a Promise and a cache key that uniquely identifies
@@ -177,7 +177,7 @@ This construction means that your render function will never proceed beyond this
 to you the successfully resolved value from your `Promise`. No more needing to deal with `undefined`
 loading values.
 
-### useLazySuspension - For trickier cases
+### `useLazySuspension` - For trickier cases
 
 `useLazySuspension(generator, cacheKey, options)` is your friend for calls where the arguments to your
 generator might change between render cycles, or where you might need to delay your generator. It takes
