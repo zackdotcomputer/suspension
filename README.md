@@ -16,7 +16,7 @@ That template is Copyright (c) 2018 Othneil Drew licensed under the MIT license.
 <br />
 <p align="center">
   <a href="https://github.com/zackdotcomputer/suspension">
-    <img src="suspension-logo.png" alt="Logo" width="80" height="80">
+    <img src="suspension-logo.png" alt="Logo" width="120" height="120">
   </a>
 
   <h3 align="center">Suspension</h3>
