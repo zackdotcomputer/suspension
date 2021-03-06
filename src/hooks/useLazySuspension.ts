@@ -6,6 +6,7 @@ import {
   LazySuspendableResult,
   SuspendableWithArgs
 } from "../@types";
+import { LastCallDetailedState } from "../@types/LazySuspendableResult";
 import { SuspensionResolutionFailedError } from "../Errors";
 import { DefaultSuspensionOptions, SuspensionOptions } from "../options/SuspensionOptions";
 import { useNearestSuspensionRig } from "../SuspensionRig";
@@ -157,11 +158,15 @@ export default function useLazySuspension<Result, Args extends any[] = []>(
     throw new SuspensionResolutionFailedError(callState.error, starterFunction);
   }
 
+  const stateResponse: LastCallDetailedState<Result, Args> = callState
+    ? { lastCallState: callState, lastCallArgs: callArgs }
+    : { lastCallState: { status: CallStatus.unstarted }, lastCallArgs: null };
+
   // Handle the success or unstarted cases, which return the value
   // (or lack thereof) and the trigger function.
   if (callState?.status === CallStatus.success) {
-    return [callState.result, starterFunction, callState];
+    return [callState.result, starterFunction, stateResponse];
   }
   // Else unstarted
-  return [undefined, starterFunction, callState ?? { status: CallStatus.unstarted }];
+  return [undefined, starterFunction, stateResponse];
 }

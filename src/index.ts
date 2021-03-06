@@ -9,4 +9,4 @@ export { useLazySuspension, useSuspension } from "./hooks";
 /// Options you can pass to the hooks
 export type { RefreshIsNeededCheck, SuspensionOptions } from "./options/SuspensionOptions";
 /// The wrapper rig for the hooks:
-export { SuspensionRig, ErrorBoundary } from "./SuspensionRig";
+export { SuspensionRig } from "./SuspensionRig";

@@ -31,6 +31,8 @@ export const DefaultSuspensionOptions: AllSuspensionOptions<any[]> = {
     /// of the function
     const [l, r] = arr;
 
+    console.debug("Checking ", l, r);
+
     // Default test does a shallow === check of all the args. If they are the
     // same by this check, then DO NOT refresh the underlying data.
     if (l === r) {

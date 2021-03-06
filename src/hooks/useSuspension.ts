@@ -1,6 +1,6 @@
 import isPromise from "is-promise";
-import { CallStatus, Suspendable } from "../@types";
-import { SuspensionOptions } from "../options/SuspensionOptions";
+import { CallStatus, FunctionWithArgs, Suspendable } from "../@types";
+import { DefaultSuspensionOptions, SuspensionOptions } from "../options/SuspensionOptions";
 import useLazySuspension from "./useLazySuspension";
 
 /**
@@ -25,6 +25,7 @@ import useLazySuspension from "./useLazySuspension";
  *   the same accessor and also serve to fetch the same data. Suspensions 3 and 4
  *   should have *different* keys from 1, 2, and each other because they are not
  *   fetching the same data.
+ * @param args If your generator takes arguments, pass them as an array at call time.
  * @param options Custom `SuspensionOptions` for this linkage.
  * @returns The resolved value from your generator Suspendable. This hook will ALWAYS either
  *   return the fully-resolved value or else throw (see below).
@@ -33,26 +34,56 @@ import useLazySuspension from "./useLazySuspension";
  *   If the resolution has failed, this function will throw a `SuspensionResolutionFailedError`,
  *   which contains the underlying error and a retry function.
  */
-export default function useSuspension<Result>(
-  generator: Suspendable<Result>,
+function useSuspension<Result, Args extends [] = []>(
+  generator: Suspendable<Result, Args>,
   cacheKey: string,
   options?: SuspensionOptions
+): Result;
+function useSuspension<Result, Args extends any[]>(
+  generator: Suspendable<Result, Args>,
+  cacheKey: string,
+  args: Args,
+  options?: SuspensionOptions
+): Result;
+function useSuspension<Result, Args extends any[] = []>(
+  generator: Suspendable<Result, Args>,
+  cacheKey: string,
+  argsOrOptions?: Args | SuspensionOptions,
+  options?: SuspensionOptions
 ): Result {
-  const [, startCallF, fullStatus] = useLazySuspension<Result>(
-    (): Promise<Result> => {
-      // Digest the different kinds of Suspendable<R> to all be Promise<R>
-      const suspendMe = typeof generator === "function" ? generator() : generator;
-      return isPromise(suspendMe) ? suspendMe : Promise.resolve(suspendMe);
-    },
+  // The options to use are either the options if we got them in slot 4, or the value in slot
+  // 3 unless it's an args array.
+  const optionsToUse = options ?? Array.isArray(argsOrOptions) ? undefined : argsOrOptions;
+
+  const argsToUse = (Array.isArray(argsOrOptions) ? argsOrOptions : undefined) ?? [];
+
+  const wrappedGenerator: (...args: Args) => Promise<Result> = (...args: Args): Promise<Result> => {
+    // Digest the different kinds of Suspendable<R> to all be Promise<R>
+    const suspendMe = typeof generator === "function" ? generator(...args) : generator;
+    return isPromise(suspendMe) ? suspendMe : Promise.resolve(suspendMe);
+  };
+
+  const [, startCallF, fullStatus] = useLazySuspension<Result, Args>(
+    // Again, I think this should be a safe cast because of the flexibility of
+    // ...args parameters for empty calls.
+    wrappedGenerator as FunctionWithArgs<Args, Promise<Result>>,
     cacheKey,
-    options
+    optionsToUse
   );
 
+  const argsDiscriminator =
+    optionsToUse?.shouldRefreshData ?? DefaultSuspensionOptions.shouldRefreshData;
+
   // If the above call didn't throw on its own, we either are already resolved
-  // or haven't started.
-  if (fullStatus.status === CallStatus.success) {
-    return fullStatus.result;
+  // or haven't started. Check that the args didn't change and then roll ahead.
+  if (
+    fullStatus.lastCallState.status === CallStatus.success &&
+    !argsDiscriminator(fullStatus.lastCallArgs, argsToUse)
+  ) {
+    return fullStatus.lastCallState.result;
   } else {
-    throw startCallF();
+    throw startCallF(...argsToUse);
   }
 }
+
+export default useSuspension;

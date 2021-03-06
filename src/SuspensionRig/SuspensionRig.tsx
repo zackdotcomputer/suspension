@@ -1,36 +1,25 @@
-import React, {
-  PropsWithChildren,
-  ReactChild,
-  Suspense,
-  SuspenseProps,
-  useEffect,
-  useState
-} from "react";
-import ErrorBoundary from "./ErrorBoundary";
+import React, { PropsWithChildren, Suspense, SuspenseProps, useEffect, useState } from "react";
+import { ErrorBoundary, ErrorBoundaryProps } from "react-error-boundary";
 import { makeRigCacheViewer, RigCacheViewer, SuspensionCache } from "./SuspensionCache";
 import SuspensionRigContext from "./SuspensionRigContext";
 
-interface PropsForErrorHandling {
-  errorFallback: ReactChild;
-  errorLoggingHandler?: (error: any, errorInfo: any) => void;
-}
+type PropsForErrorHandling = {
+  errorBoundary: ErrorBoundaryProps;
+};
 
 type PropsForSuspenseHandling = Partial<Pick<SuspenseProps, "fallback">>;
 
 export type Props = PropsWithChildren<{}> &
   PropsForSuspenseHandling &
-  (PropsForErrorHandling | { errorFallback?: undefined; errorLoggingHandler?: undefined });
+  Partial<PropsForErrorHandling>;
 
 /**
  * The SuspensionRig provides a context for suspension hooks to cache data about their
  * calls upon. It can also act as your Suspense barrier if you provide the fallback prop.
+ * It can also act as your ErrorBoundary if you provide the errorBoundary prop containing
+ * an object of props for react-error-boundary.
  */
-export default function SuspensionRig({
-  children,
-  fallback,
-  errorFallback,
-  errorLoggingHandler
-}: Props) {
+export default function SuspensionRig({ children, fallback, errorBoundary }: Props) {
   const [rigViewer, setRigViewer] = useState<RigCacheViewer | Promise<RigCacheViewer>>(null as any);
 
   // If we're instantiated but not yet mounted, make a promise for when we are ready.
@@ -67,13 +56,16 @@ export default function SuspensionRig({
     children
   );
 
-  const errorWrapping = !!errorFallback ? (
-    <ErrorBoundary fallback={errorFallback} handleLogError={errorLoggingHandler}>
-      {suspenseWrapping}
-    </ErrorBoundary>
-  ) : (
-    suspenseWrapping
-  );
+  console.debug("Error", errorBoundary);
+  const errorWrapping =
+    errorBoundary !== undefined ? (
+      <>
+        <div>errrrrr</div>
+        <ErrorBoundary {...errorBoundary}>{suspenseWrapping}</ErrorBoundary>
+      </>
+    ) : (
+      suspenseWrapping
+    );
 
   return (
     <SuspensionRigContext.Provider value={rigViewer}>{errorWrapping}</SuspensionRigContext.Provider>

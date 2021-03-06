@@ -7,7 +7,9 @@ import FunctionWithArgs from "./FunctionWithArgs";
  * For compatability's sake with tools like Redux Thunks, accessor functions which return
  * the Result value directly are also supported and should resolve in two render cycles.
  */
-export type Suspendable<Result> = Promise<Result> | (() => Promise<Result>) | (() => Result);
+export type Suspendable<Result, Args extends any[]> = Args extends []
+  ? Promise<Result> | SuspendableWithArgs<Result, Args>
+  : SuspendableWithArgs<Result, Args>;
 
 /**
  * A suspendable function which can be fed parameters (or no parameters) in exchange

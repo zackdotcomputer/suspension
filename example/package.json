@@ -1,10 +1,10 @@
 {
   "name": "suspension-example",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.html",
   "license": "MIT",
   "scripts": {
-    "start": "parcel index.html",
+    "start": "NODE_ENV=development parcel index.html index.tsx",
     "build": "parcel build index.html"
   },
   "dependencies": {

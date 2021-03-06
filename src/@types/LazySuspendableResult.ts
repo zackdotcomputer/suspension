@@ -1,6 +1,11 @@
 import { CallState } from "./CallState";
 import FunctionWithArgs from "./FunctionWithArgs";
 
+export type LastCallDetailedState<Result, Args> = {
+  lastCallArgs: Args | null;
+  lastCallState: CallState<Result>;
+};
+
 /**
  * The result of a successful lazy suspension call is an array with three elements.
  * - The first one will be undefined if the trigger function has never been
@@ -13,5 +18,5 @@ import FunctionWithArgs from "./FunctionWithArgs";
 export type LazySuspendableResult<Result, Args extends any[] = []> = [
   Result | undefined,
   FunctionWithArgs<Args, Promise<Result>>,
-  CallState<Result>
+  LastCallDetailedState<Result, Args>
 ];

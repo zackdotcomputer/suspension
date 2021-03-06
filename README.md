@@ -148,7 +148,7 @@ There are three main pieces to `suspension`:
 suspense uses `throw` to interrupt the render process, anything that was stored in state
 from that point up to the last `<Suspense>` component will be destroyed. `<SuspensionRig>`
 gives a safe space **above** the last `<Suspense>` for the hooks to store their data. It
-serves two main purposes in that way:
+serves three main purposes in that way:
 
 1. **It is a cache**. The rig is responsible for caching all the data about the promises
    linked to hooks beneath it. There is no limit, though, on the number of rigs you place in
@@ -162,24 +162,31 @@ serves two main purposes in that way:
    If you want the `SuspenseRig` to behave as both a cache and a fallback `Suspense`, you just
    need to give it the same `fallback` prop you would give a `Suspense`.
 
+3. **It is your Error Boundary**. Similarly to how you can pass the `fallback` prop to your rig to
+   have it act as a Suspense, you can also pass an `errorBoundary` prop to have it act as your Error
+   Boundary. Under the hood, this feature uses [react-error-boundary](https://github.com/bvaughn/react-error-boundary)
+   to implement the error boundary. You can pass anything in the `errorBoundary` object that you
+   would pass as a prop to that library. If the object is present at all, the rig will insert
+   a boundary below itself and above the Suspense (if included) and children.
+
 ### `useSuspension` - The ready-to-go hook
 
-`useSuspension(generator, cacheKey, options)` is the primary hook for accessing suspension. It takes
-a parameter-free generator function that returns a Promise and a cache key that uniquely identifies
-this call's purpose (see below).
+`useSuspension(generator, cacheKey, args, options)` is the primary hook for accessing suspension.
+It takes a parameter-free generator function that returns a Promise and a cache key that uniquely
+identifies this call's purpose (see below).
 
-As soon as you call this hook, it will start your generator
-going and interrupt the render cycle at that point. (Note: even if your generator returns a resolved
-promise, React will always do at least one render update falling back to the `<Suspense>`.) Once the
-Promise has resolved, the tree under the nearest Suspense will be reloaded and the hook will
-**then** either provide you with the result of the `Promise` or throw the `Error` for your nearest
-ErrorBoundary if the Promise was rejected.
+As soon as you call this hook, it will start your generator going and interrupt the render cycle
+at that point. (Note: even if your generator returns a resolved promise, React will always do at
+least one render update falling back to the `<Suspense>`.) Once the Promise has resolved, the tree
+under the nearest Suspense will be reloaded and the hook will **then** either provide you with the
+result of the `Promise` or throw the `Error` for your nearest ErrorBoundary if the Promise was
+rejected.
 
-This construction means that your render function will never proceed beyond this call unless it can return
-to you the successfully resolved value from your `Promise`. No more needing to deal with `undefined`
-loading values.
+This construction means that your render function will never proceed beyond this call unless it can
+return to you the successfully resolved value from your `Promise`. No more needing to deal with
+`undefined` loading values.
 
-### `useLazySuspension` - For trickier cases
+### `useLazySuspension` - For those asynchronous asynchronous cases
 
 `useLazySuspension(generator, cacheKey, options)` is your friend for calls where the arguments to your
 generator might change between render cycles, or where you might need to delay your generator. It takes
@@ -188,10 +195,7 @@ also still takes that same cache key that uniquely identifies this call's purpos
 
 When you call this hook you will get back an array. The first element is your result and it will start
 as `undefined`. The second element is your trigger function. It will have the same parameter expectations
-as your generators. Whenever you want to start a new call, call the trigger function with the args. If you
-call it with different args than a previous render cycle (by default this is determined using a `===` check)
-then it will discard the cache and make the call again. If you call it with the same args and it has already
-resolved successfully, it will reuse that result.
+as your generators. Whenever you want to start a new call, call the trigger function with the args.
 
 The trigger function also uses a bit of trickery to trigger a re-render of your component, so as soon
 as you call it the host component will redraw and disappear from screen, falling back to the nearest
@@ -201,6 +205,15 @@ will return the same array but now the first element will be the resolved value 
 the hook was rejected, the hook will throw a `SuspensionResolutionFailedError`, which can be caught
 by an ErrorBoundary. This error will have the underlying failure as well as a `retryFunction` that can
 be used to retry the generator with the same args.
+
+### Caching
+
+When you call the `useSuspension` hook or the `useLazySuspension` trigger function the Rig will check
+if results are already cached. It will do this based on your supplied cache key and the args array you
+provide. If the args array is the same (by default determined by walking the args array with a `===`
+check) and the last Promise is loading or resolved, then it will not start a new call. If the last call
+was rejected or the args array appears to be new, then the previous results will be discarded and a new
+call started from your generator.
 
 ### Cache Keys
 

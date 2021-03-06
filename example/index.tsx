@@ -2,12 +2,20 @@ import "react-app-polyfill/ie11";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SuspensionRig, useSuspension } from "../.";
+import { useState } from "react";
 
 const PokeInfo = ({ pokemonNumber }: { pokemonNumber: number }) => {
-  const pokemon = useSuspension(async (): Promise<any> => {
-    const fetched = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonNumber}`);
-    return (await fetched.json()) as any;
-  }, `load-pokemon-${pokemonNumber}`);
+  console.log("Going to load ", pokemonNumber);
+
+  const pokemon = useSuspension(
+    async (missingNo: number): Promise<any> => {
+      console.log("Doing actual fetch with ", missingNo);
+      const fetched = await fetch(`https://pokeapi.co/api/v2/pokemon/${missingNo}`);
+      return (await fetched.json()) as any;
+    },
+    `load-pokemon`,
+    [pokemonNumber]
+  );
 
   return (
     <div key={`pokemon-${pokemonNumber}`}>
@@ -25,37 +33,73 @@ const PokeInfo = ({ pokemonNumber }: { pokemonNumber: number }) => {
   );
 };
 
-const App = () => {
+const PokeForm = ({ onDoLoad }: { onDoLoad: (no: number) => void }) => {
   const [pokeNumber, setPokeNumber] = React.useState<number>(25);
-  const [currentPokeNumber, setCurrentPokeNumber] = React.useState<number>(pokeNumber);
 
+  return (
+    <div>
+      Load a pokemon:{" "}
+      <input
+        type="number"
+        onChange={(e) => {
+          const newNumb = Number(e.target.value);
+          if (isNaN(newNumb)) {
+            e.preventDefault();
+            return;
+          }
+          setPokeNumber(Number(e.target.value));
+        }}
+        value={pokeNumber}
+      />
+      <button
+        type="button"
+        onClick={() => {
+          onDoLoad(pokeNumber);
+        }}
+      >
+        I choose you!
+      </button>
+    </div>
+  );
+};
+
+const PokeError = ({ error, resetErrorBoundary }) => {
+  console.error(error);
+  return (
+    <>
+      <div>Uh oh! A poke-error occurred!</div>
+      <PokeForm
+        onDoLoad={(n) => {
+          resetErrorBoundary(n);
+        }}
+      />
+    </>
+  );
+};
+
+const App = () => {
+  const [renderedPokeNumber, setRenderedPokeNumber] = useState<number>(25);
+
+  console.log(renderedPokeNumber);
   return (
     <main>
       <SuspensionRig
         fallback={<div>Pokeloading...</div>}
-        errorFallback={<div>Uh oh! Pokeerror! Try another number.</div>}
-      >
-        <PokeInfo pokemonNumber={currentPokeNumber} />
-      </SuspensionRig>
-      <br />
-      <div>
-        Load a pokemon:{" "}
-        <input
-          type="number"
-          onChange={(e) => {
-            const newNumb = Number(e.target.value);
-            if (isNaN(newNumb)) {
-              e.preventDefault();
-              return;
+        errorBoundary={{
+          onReset: (newNumber: number) => {
+            const newNo = Number(newNumber);
+            if (!isNaN(newNo)) {
+              setRenderedPokeNumber(newNo);
             }
-            setPokeNumber(Number(e.target.value));
-          }}
-          value={pokeNumber}
-        />
-        <button type="button" onClick={() => setCurrentPokeNumber(pokeNumber)}>
-          I choose you!
-        </button>
-      </div>
+          },
+          FallbackComponent: PokeError,
+          resetKeys: [renderedPokeNumber]
+        }}
+      >
+        <PokeInfo pokemonNumber={renderedPokeNumber} />
+        <br />
+        <PokeForm onDoLoad={(n) => setRenderedPokeNumber(n)} />
+      </SuspensionRig>
     </main>
   );
 };
