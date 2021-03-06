@@ -1,9 +1,16 @@
-import React, { PropsWithChildren, useEffect, useState } from "react";
+import React, { PropsWithChildren, Suspense, SuspenseProps, useEffect, useState } from "react";
 import SuspensionCache from "./SuspensionCache";
 import { makeRigCacheViewer, RigCacheViewer } from "./SuspensionCache/RigCacheViewer";
 import SuspensionRigContext from "./SuspensionRigContext";
 
-export default function SuspensionRig({ children }: PropsWithChildren<{}>) {
+/**
+ * The SuspensionRig provides a context for suspension hooks to cache data about their
+ * calls upon. It can also act as your Suspense barrier if you provide the fallback prop.
+ */
+export default function SuspensionRig({
+  children,
+  fallback
+}: PropsWithChildren<Pick<SuspenseProps, "fallback">>) {
   const [rigViewer, setRigViewer] = useState<RigCacheViewer | Promise<RigCacheViewer>>(null as any);
 
   // If we're instantiated but not yet mounted, make a promise for when we are ready.
@@ -35,6 +42,8 @@ export default function SuspensionRig({ children }: PropsWithChildren<{}>) {
   }, []);
 
   return (
-    <SuspensionRigContext.Provider value={rigViewer}>{children}</SuspensionRigContext.Provider>
+    <SuspensionRigContext.Provider value={rigViewer}>
+      {fallback ? <Suspense fallback={fallback}>{children}</Suspense> : children}
+    </SuspensionRigContext.Provider>
   );
 }
