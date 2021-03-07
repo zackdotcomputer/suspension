@@ -7,5 +7,5 @@ export type {
   UnstartedCallState
 } from "./CallState";
 export type { default as FunctionWithArgs } from "./FunctionWithArgs";
-export type { LazySuspendableResult } from "./LazySuspendableResult";
+export type { LazySuspensionReaders } from "./LazySuspensionReaders";
 export type { Suspendable, SuspendableWithArgs } from "./Suspendable";

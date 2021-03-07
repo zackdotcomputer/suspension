@@ -33,8 +33,14 @@ const PokeInfo = ({ pokemonNumber }: { pokemonNumber: number }) => {
   );
 };
 
-const PokeForm = ({ onDoLoad }: { onDoLoad: (no: number) => void }) => {
-  const [pokeNumber, setPokeNumber] = React.useState<number>(25);
+const PokeForm = ({
+  initialPokeNumber,
+  onDoLoad
+}: {
+  initialPokeNumber?: number;
+  onDoLoad: (no: number) => void;
+}) => {
+  const [pokeNumber, setPokeNumber] = React.useState<number>(initialPokeNumber ?? 25);
 
   return (
     <div>
@@ -98,7 +104,10 @@ const App = () => {
       >
         <PokeInfo pokemonNumber={renderedPokeNumber} />
         <br />
-        <PokeForm onDoLoad={(n) => setRenderedPokeNumber(n)} />
+        <PokeForm
+          onDoLoad={(n) => setRenderedPokeNumber(n)}
+          initialPokeNumber={renderedPokeNumber}
+        />
       </SuspensionRig>
     </main>
   );

@@ -1,7 +1,9 @@
 import isPromise from "is-promise";
 import { CallStatus, FunctionWithArgs, Suspendable } from "../@types";
-import { DefaultSuspensionOptions, SuspensionOptions } from "../options/SuspensionOptions";
-import useLazySuspension from "./useLazySuspension";
+import { SuspensionResolutionFailedError } from "../Errors";
+import { SuspensionOptions } from "../options/SuspensionOptions";
+import { useNearestSuspensionRig } from "../SuspensionRig";
+import useGetCacheLoader from "./useGetCacheLoader";
 
 /**
  * Allows you to transform a promise or promise-returning function into one which will
@@ -49,41 +51,84 @@ function useSuspension<Result, Args extends any[] = []>(
   generator: Suspendable<Result, Args>,
   cacheKey: string,
   argsOrOptions?: Args | SuspensionOptions,
-  options?: SuspensionOptions
+  optionsOpt?: SuspensionOptions
 ): Result {
+  const rig = useNearestSuspensionRig();
+
+  // If our parent rig exists but isn't mounted yet, wait until it finishes and try again.
+  if (isPromise(rig)) {
+    throw rig;
+  }
+
   // The options to use are either the options if we got them in slot 4, or the value in slot
   // 3 unless it's an args array.
-  const optionsToUse = options ?? Array.isArray(argsOrOptions) ? undefined : argsOrOptions;
+  const optionsToUse = optionsOpt ?? Array.isArray(argsOrOptions) ? undefined : argsOrOptions;
 
-  const argsToUse = (Array.isArray(argsOrOptions) ? argsOrOptions : undefined) ?? [];
+  // It's unclear why but something about my weird hacks around Args being empty causes TS to
+  // die here. Casting fixed it.
+  const argsToUse: Args = (Array.isArray(argsOrOptions) ? argsOrOptions : []) as Args;
 
-  const wrappedGenerator: (...args: Args) => Promise<Result> = (...args: Args): Promise<Result> => {
+  const uncastWrappedGenerator = (...args: Args): Promise<Result> => {
     // Digest the different kinds of Suspendable<R> to all be Promise<R>
     const suspendMe = typeof generator === "function" ? generator(...args) : generator;
     return isPromise(suspendMe) ? suspendMe : Promise.resolve(suspendMe);
   };
+  const wrappedGenerator = uncastWrappedGenerator as FunctionWithArgs<Args, Promise<Result>>;
 
-  const [, startCallF, fullStatus] = useLazySuspension<Result, Args>(
-    // Again, I think this should be a safe cast because of the flexibility of
-    // ...args parameters for empty calls.
-    wrappedGenerator as FunctionWithArgs<Args, Promise<Result>>,
-    cacheKey,
-    optionsToUse
-  );
+  const cacheLoader = useGetCacheLoader(wrappedGenerator, cacheKey, optionsToUse);
 
-  const argsDiscriminator =
-    optionsToUse?.shouldRefreshData ?? DefaultSuspensionOptions.shouldRefreshData;
-
-  // If the above call didn't throw on its own, we either are already resolved
-  // or haven't started. Check that the args didn't change and then roll ahead.
-  if (
-    fullStatus.lastCallState.status === CallStatus.success &&
-    !argsDiscriminator(fullStatus.lastCallArgs, argsToUse)
-  ) {
-    return fullStatus.lastCallState.result;
-  } else {
-    throw startCallF(...argsToUse);
+  const status = cacheLoader(...argsToUse);
+  if (status.status === CallStatus.success) {
+    return status.result;
   }
+
+  if (status.status === CallStatus.loading) {
+    throw status.promise;
+  }
+
+  if (status.status === CallStatus.failed) {
+    throw new SuspensionResolutionFailedError(status.error, () => {
+      rig.clearCall(cacheKey);
+      const result = useSuspension(generator, cacheKey, argsToUse, optionsToUse);
+      throw Promise.resolve(result);
+    });
+  }
+
+  // Ok, no success, loading, or failure means start a new call.
+  const newResultsPromise = wrappedGenerator(...argsToUse);
+
+  rig.startCall({
+    key: cacheKey,
+    args: argsToUse,
+    promise: newResultsPromise
+  });
+
+  // Set up the new promise to dispatch results to the cache
+  newResultsPromise
+    .then((result) => {
+      rig.resolveCall({
+        key: cacheKey,
+        promise: newResultsPromise,
+        resolution: {
+          status: CallStatus.success,
+          result
+        }
+      });
+      return result;
+    })
+    .catch((reason: Error) => {
+      rig.resolveCall({
+        key: cacheKey,
+        promise: newResultsPromise,
+        resolution: {
+          status: CallStatus.failed,
+          error: reason
+        }
+      });
+      throw reason;
+    });
+
+  throw newResultsPromise;
 }
 
 export default useSuspension;

@@ -25,7 +25,7 @@ describe("useLazySuspension hook - no args", () => {
     if (shouldTriggerHook && hook) {
       hook();
     }
-    return <span>{result}</span>;
+    return <span>{result()}</span>;
   }
 
   const getTestPromise = (): [jest.Mock<Promise<string>, []>, Promise<string>] => {

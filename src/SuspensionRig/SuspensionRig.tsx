@@ -56,11 +56,9 @@ export default function SuspensionRig({ children, fallback, errorBoundary }: Pro
     children
   );
 
-  console.debug("Error", errorBoundary);
   const errorWrapping =
     errorBoundary !== undefined ? (
       <>
-        <div>errrrrr</div>
         <ErrorBoundary {...errorBoundary}>{suspenseWrapping}</ErrorBoundary>
       </>
     ) : (

@@ -1,15 +1,11 @@
 import isPromise from "is-promise";
-import { useCallback, useState } from "react";
-import {
-  CallStatus,
-  FunctionWithArgs,
-  LazySuspendableResult,
-  SuspendableWithArgs
-} from "../@types";
-import { LastCallDetailedState } from "../@types/LazySuspendableResult";
+import { useCallback } from "react";
+import { CallStatus, FunctionWithArgs, SuspendableWithArgs } from "../@types";
+import { LazySuspensionReaders } from "../@types";
 import { SuspensionResolutionFailedError } from "../Errors";
-import { DefaultSuspensionOptions, SuspensionOptions } from "../options/SuspensionOptions";
+import { SuspensionOptions } from "../options/SuspensionOptions";
 import { useNearestSuspensionRig } from "../SuspensionRig";
+import useGetCacheLoader from "./useGetCacheLoader";
 
 /**
  * Allows you to transform a promise-returning function into one which will trigger
@@ -18,6 +14,8 @@ import { useNearestSuspensionRig } from "../SuspensionRig";
  * Note, if you would only ever be calling this with the same args, it is best practice
  * to capture those args in a closure by making generator `() => (realTarget(args))` and
  * then calling the trigger with (). This will optimize "needs refresh" check.
+ *
+ * TODO:
  *
  * @param generator The promise-returning function you would like to link to Suspense
  * @param cacheKey A cache key for this suspension. It should be unique to *usage*,
@@ -50,14 +48,7 @@ export default function useLazySuspension<Result, Args extends any[] = []>(
   generator: SuspendableWithArgs<Result, Args>,
   cacheKey: string,
   options?: SuspensionOptions
-): LazySuspendableResult<Result, Args> {
-  if (
-    typeof window === "undefined" &&
-    (options?.alwaysLoadingInSSR ?? DefaultSuspensionOptions.alwaysLoadingInSSR)
-  ) {
-    throw new Promise(() => {}); // Will never resolve, generating an "always loading" for SSR
-  }
-
+): LazySuspensionReaders<Result, Args> {
   const rig = useNearestSuspensionRig();
 
   // If our parent rig exists but isn't mounted yet, wait until it finishes and try again.
@@ -65,42 +56,21 @@ export default function useLazySuspension<Result, Args extends any[] = []>(
     throw rig;
   }
 
-  const currentValue = rig?.value<Result, Args>(cacheKey);
+  const cacheLoader = useGetCacheLoader(generator, cacheKey, options);
 
-  const callState = currentValue?.callState;
-  const callArgs = currentValue?.lastCallArgs ?? null;
-
-  const [, setHasTriggeredStarter] = useState<boolean>(false);
-
-  const uncastStarter: (...a: Args) => Promise<Result> = useCallback(
+  const uncastSuspenseReader: (...a: Args) => Result = useCallback(
     (...a: Args) => {
-      if (!rig) {
-        throw new Error("Suspension Error - Starter was called too soon :(");
+      const status = cacheLoader(...a);
+      if (status.status === CallStatus.success) {
+        return status.result;
       }
 
-      if (callState === undefined) {
-        rig.initializeCall({
-          key: cacheKey,
-          generator
-        });
+      if (status.status === CallStatus.loading) {
+        throw status.promise;
       }
 
-      const shouldRefreshData =
-        options?.shouldRefreshData ?? DefaultSuspensionOptions.shouldRefreshData;
-
-      // If we already have a result and the args are the same, don't kick off a new call.
-      if (callState?.status === CallStatus.success && !shouldRefreshData(callArgs, a)) {
-        return Promise.resolve(callState.result);
-      }
-
-      // If we are currently loading and the args are the same, wait on the in-progress result.
-      if (callState?.status === CallStatus.loading && !shouldRefreshData(callArgs, a)) {
-        return callState.promise;
-      }
-
-      // Otherwise, the call is either failed or unstarted or else the args are different enough
-      // that we really do need to do a refresh.
-
+      // If we don't have a success or in-progress under our belts,
+      // it was unstarted or a failure. We should start a new one.
       const newResultsPromise = generator(...a);
 
       rig.startCall({
@@ -134,39 +104,40 @@ export default function useLazySuspension<Result, Args extends any[] = []>(
           throw reason;
         });
 
-      // Manipulating a state value for the hook will cause the host component to be
-      // redrawn, which will trigger a re-evaluation of the hook and a throw of the
-      // Suspense promise.
-      setHasTriggeredStarter(true);
-
-      return newResultsPromise;
+      throw newResultsPromise;
     },
-    [generator, callArgs, callState, options]
+    [cacheLoader, generator, cacheKey]
+  );
+
+  const uncastReaderFunction: (...a: Args) => Result | undefined = useCallback(
+    (...a: Args) => {
+      const status = cacheLoader(...a);
+      if (status.status === CallStatus.success) {
+        return status.result;
+      }
+
+      if (status.status === CallStatus.loading) {
+        throw status.promise;
+      } else if (status.status === CallStatus.failed) {
+        throw new SuspensionResolutionFailedError(status.error, () => {
+          const r = uncastSuspenseReader(...a);
+          // If it's a success, we still want the retry to look like a retry
+          throw Promise.resolve(r);
+        });
+      }
+
+      // Otherwise, we haven't loaded a thing yet
+      return undefined;
+    },
+    [cacheLoader, uncastSuspenseReader]
   );
 
   // NOTE I should research this cast to make sure it's 100% safe, but
   // testing it in modern Chrome and FF does confirm that there at least
   // it is, indeed, equivalent to say `(...a: []) => R` and `() => R`.
   // Which means that this cast SHOULD be ok? #famouslastwords
-  const starterFunction = uncastStarter as FunctionWithArgs<Args, Promise<Result>>;
+  const readerF = uncastReaderFunction as FunctionWithArgs<Args, Result | undefined>;
+  const suspenseF = uncastSuspenseReader as FunctionWithArgs<Args, Result>;
 
-  // Handle the pending or failed cases, which throw for suspense
-  if (callState?.status === CallStatus.loading) {
-    throw callState.promise;
-  } else if (callState?.status === CallStatus.failed) {
-    // This error type includes a function that you can use in Error Boundary to retry
-    throw new SuspensionResolutionFailedError(callState.error, starterFunction);
-  }
-
-  const stateResponse: LastCallDetailedState<Result, Args> = callState
-    ? { lastCallState: callState, lastCallArgs: callArgs }
-    : { lastCallState: { status: CallStatus.unstarted }, lastCallArgs: null };
-
-  // Handle the success or unstarted cases, which return the value
-  // (or lack thereof) and the trigger function.
-  if (callState?.status === CallStatus.success) {
-    return [callState.result, starterFunction, stateResponse];
-  }
-  // Else unstarted
-  return [undefined, starterFunction, stateResponse];
+  return [readerF, suspenseF];
 }
