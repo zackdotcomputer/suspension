@@ -1,6 +1,6 @@
 {
   "name": "suspension",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React hooks and utilities for using Suspense with existing APIs",
   "main": "dist/index.js",
   "module": "dist/suspension.esm.js",
@@ -51,7 +51,8 @@
   ],
   "files": [
     "/dist",
-    "/src"
+    "/src",
+    "/suspension-logo.png"
   ],
   "husky": {
     "hooks": {
