@@ -22,7 +22,7 @@ That template is Copyright (c) 2018 Othneil Drew licensed under the MIT license.
   <h3 align="center">Suspension</h3>
 
   <p align="center">
-    A "hook in place" approach to easily integrating your existing Promises and async/await data fetchers with React <pre><Suspense></pre> components.
+    A "hook in place" approach to easily integrating your existing Promises and async/await data fetchers with React Suspense components.
     <br />
     <a href="https://github.com/zackdotcomputer/suspension"><strong>Explore the docs »</strong></a>
     <br />
