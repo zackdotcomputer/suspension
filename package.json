@@ -50,8 +50,8 @@
     }
   ],
   "files": [
-    "dist",
-    "src"
+    "/dist",
+    "/src"
   ],
   "husky": {
     "hooks": {
