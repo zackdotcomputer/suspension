@@ -1,3 +1,11 @@
+# Deprecated
+
+Thanks for coming to check Suspension out. In the time since I wrote it, `react-query` has made tremendous strides to incorporate the features I wanted to form the foundation of Suspension.
+
+I'll be moving my open-source efforts on this front over to their project. I'd recommend you [check it out here](https://react-query.tanstack.com/).
+
+----------
+
 <!--
 ***
 This README is based on @othneildrew's template at othneildrew/Best-README-Template.
